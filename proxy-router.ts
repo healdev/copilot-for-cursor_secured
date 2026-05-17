@@ -230,7 +230,7 @@ Bun.serve({
                     } catch {}
                 };
                 const unsub = subscribeTunnel(send);
-                (controller as any)._tunnelUnsub = unsub;
+                (controller as any)._tunnelUnsub = subscribeTunnel(send);
             },
             cancel(controller) {
                 const unsub = (controller as any)?._tunnelUnsub;
@@ -452,9 +452,11 @@ Bun.serve({
             display_name: PREFIX + (model.display_name || model.id)
           }));
         }
+        const responseHeaders = new Headers(response.headers);
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
         return new Response(JSON.stringify(data), {
             status: response.status,
-            headers: { ...Object.fromEntries(response.headers), "Access-Control-Allow-Origin": "*" }
+            headers: responseHeaders,
         });
       }
 

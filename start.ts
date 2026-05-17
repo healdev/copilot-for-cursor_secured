@@ -71,31 +71,38 @@ async function main() {
         });
 
         // Stream copilot-api output with prefix
-        (async () => {
-            const reader = copilotProc!.stdout.getReader();
-            const decoder = new TextDecoder();
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const text = decoder.decode(value, { stream: true });
-                for (const line of text.split('\n').filter(Boolean)) {
-                    console.log(`${RED}[copilot-api]${RESET} ${line}`);
-                }
-            }
-        })();
+        const stdoutStream = copilotProc.stdout;
+        const stderrStream = copilotProc.stderr;
 
-        (async () => {
-            const reader = copilotProc!.stderr.getReader();
-            const decoder = new TextDecoder();
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const text = decoder.decode(value, { stream: true });
-                for (const line of text.split('\n').filter(Boolean)) {
-                    console.log(`${RED}[copilot-api]${RESET} ${line}`);
+        if (stdoutStream && typeof stdoutStream !== 'number') {
+            (async () => {
+                const reader = stdoutStream.getReader();
+                const decoder = new TextDecoder();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const text = decoder.decode(value, { stream: true });
+                    for (const line of text.split('\n').filter(Boolean)) {
+                        console.log(`${RED}[copilot-api]${RESET} ${line}`);
+                    }
                 }
-            }
-        })();
+            })();
+        }
+
+        if (stderrStream && typeof stderrStream !== 'number') {
+            (async () => {
+                const reader = stderrStream.getReader();
+                const decoder = new TextDecoder();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const text = decoder.decode(value, { stream: true });
+                    for (const line of text.split('\n').filter(Boolean)) {
+                        console.log(`${RED}[copilot-api]${RESET} ${line}`);
+                    }
+                }
+            })();
+        }
 
         // Wait for copilot-api to be ready
         console.log(`${YELLOW}⏳ Waiting for copilot-api to be ready...${RESET}`);
