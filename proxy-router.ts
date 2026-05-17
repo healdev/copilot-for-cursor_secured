@@ -284,17 +284,29 @@ Bun.serve({
       });
     }
 
-    // ── Enforce API key auth on all /v1/* routes ──────────────────────────
-    if (url.pathname.startsWith("/v1/")) {
-        const authConfig = loadAuthConfig();
-        if (authConfig.requireApiKey) {
-            const authHeader = req.headers.get('authorization');
-            const providedKey = authHeader?.replace('Bearer ', '');
-            if (!providedKey || !validateApiKey(providedKey)) {
-                return Response.json(
-                    { error: { message: "Invalid API key. Generate one from the dashboard.", type: "invalid_api_key" } },
-                    { status: 401, headers: { "Access-Control-Allow-Origin": "*" } }
-                );
+    // ── Enforce API key auth on ALL non-dashboard / non-admin routes ──────
+    // SECURITY: the original gate matched only `/v1/*`, but the chat-completion
+    // handler below accepts `/chat/completions` (and other upstream paths) with
+    // any prefix. A misconfigured Cursor base URL (missing the `/v1` suffix)
+    // therefore bypassed auth entirely. Deny-by-default for anything that
+    // isn't an explicit public path.
+    {
+        const publicPaths = ["/", "/dashboard.html", "/favicon.ico"];
+        const isPublic =
+            req.method === "OPTIONS" ||
+            publicPaths.indexOf(url.pathname) !== -1 ||
+            url.pathname.startsWith("/api/"); // dashboard admin API
+        if (!isPublic) {
+            const authConfig = loadAuthConfig();
+            if (authConfig.requireApiKey) {
+                const authHeader = req.headers.get('authorization');
+                const providedKey = authHeader?.replace('Bearer ', '');
+                if (!providedKey || !validateApiKey(providedKey)) {
+                    return Response.json(
+                        { error: { message: "Invalid API key. Generate one from the dashboard.", type: "invalid_api_key" } },
+                        { status: 401, headers: { "Access-Control-Allow-Origin": "*" } }
+                    );
+                }
             }
         }
     }

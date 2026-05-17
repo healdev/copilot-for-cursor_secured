@@ -19,3 +19,4 @@ desktop.ini
 *.swo
 *~
 dist/
+.idea/
