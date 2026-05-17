@@ -5,7 +5,6 @@
  */
 
 import { spawn, sleep } from 'bun';
-import { existsSync } from 'fs';
 import { getUpstreamAuthHeader } from './upstream-auth';
 import { enableMaxMode, isMaxMode, fetchAndCacheModelLimits } from './max-mode';
 import { stopTunnel } from './tunnel';

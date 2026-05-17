@@ -2,10 +2,10 @@ import { normalizeRequest } from './anthropic-transforms';
 import { handleResponsesAPIBridge } from './responses-bridge';
 import { createStreamProxy } from './stream-proxy';
 import { logIncomingRequest, logTransformedRequest } from './debug-logger';
-import { addRequestLog, getNextRequestId, getUsageStats, flushToDisk, type RequestLog } from './usage-db';
+import { addRequestLog, getNextRequestId, getUsageStats, flushToDisk } from './usage-db';
 import { loadAuthConfig, saveAuthConfig, generateApiKey, validateApiKey } from './auth-config';
 import { getUpstreamAuthHeader, getUpstreamApiKeys, createUpstreamApiKey, deleteUpstreamApiKey } from './upstream-auth';
-import { compactIfNeeded, isMaxMode } from './max-mode';
+import { compactIfNeeded } from './max-mode';
 import { needsResponsesAPI } from './model-routing';
 import { getTunnelState, startTunnel, stopTunnel, subscribeTunnel, type TunnelProvider } from './tunnel';
 
@@ -229,7 +229,6 @@ Bun.serve({
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify(s)}\n\n`));
                     } catch {}
                 };
-                const unsub = subscribeTunnel(send);
                 (controller as any)._tunnelUnsub = subscribeTunnel(send);
             },
             cancel(controller) {
