@@ -1,6 +1,6 @@
 # 🚀 Copilot Proxy for Cursor
 
-> Forked from [jacksonkasi1/copilot-for-cursor](https://github.com/jacksonkasi1/copilot-for-cursor) with full Anthropic → OpenAI conversion + Responses API bridge.
+> Forked from [healdev/copilot-for-cursor_secured](https://github.com/healdev/copilot-for-cursor_secured) with full Anthropic → OpenAI conversion + Responses API bridge.
 
 **Unlock the full power of GitHub Copilot in Cursor IDE.**
 
@@ -13,7 +13,7 @@ Use **all** Copilot models (GPT-5.4, Claude Opus 4.6, Gemini 3.1, etc.) in Curso
 ### One Command (npm)
 
 ```bash
-npx copilot-for-cursor
+npx copilot-for-cursor_secured
 ```
 
 > Requires [Bun](https://bun.sh/) installed. First run will prompt GitHub authentication.
@@ -23,8 +23,8 @@ This starts both `copilot-api` (port 4141) and the proxy (port 4142) in a single
 ### Or from source
 
 ```bash
-git clone https://github.com/CharlesYWL/copilot-for-cursor.git
-cd copilot-for-cursor
+git clone https://github.com/healdev/copilot-for-cursor_secured.git
+cd copilot-for-cursor_secured
 bun run start.ts
 ```
 
