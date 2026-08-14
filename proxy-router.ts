@@ -274,11 +274,17 @@ Bun.serve({
     const targetUrl = new URL(url.pathname + url.search, TARGET_URL);
 
     if (req.method === "OPTIONS") {
+      // Echo the client's requested headers so SDK-added metadata headers
+      // (e.g. OpenAI SDK's `x-stainless-*`) pass CORS preflight. Auth is still
+      // enforced below by the `Authorization: Bearer cpk-*` check — this is a
+      // CORS-only relaxation, not an auth relaxation.
+      const reqHeaders = req.headers.get("access-control-request-headers");
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          "Access-Control-Allow-Headers": reqHeaders || "*",
+          "Access-Control-Max-Age": "600",
         },
       });
     }
