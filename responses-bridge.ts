@@ -6,6 +6,13 @@ export interface BridgeResult {
     usage: { promptTokens: number; completionTokens: number; totalTokens: number };
 }
 
+// Copilot's Responses API requires function_call.id to start with "fc".
+// call_id stays as Cursor sent it (call_… / toolu_…) so function_call_output still matches.
+export function toResponsesFunctionCallId(toolCallId: string): string {
+    if (toolCallId.startsWith('fc_')) return toolCallId;
+    return `fc_${toolCallId.replace(/^(?:call_|toolu_)/, '')}`;
+}
+
 export async function handleResponsesAPIBridge(json: any, req: Request, chatId: string, targetUrl: string): Promise<BridgeResult> {
     const corsHeaders = { "Access-Control-Allow-Origin": "*" };
 
@@ -50,7 +57,7 @@ export async function handleResponsesAPIBridge(json: any, req: Request, chatId: 
                 for (const tc of m.tool_calls) {
                     items.push({
                         type: 'function_call',
-                        id: tc.id,
+                        id: toResponsesFunctionCallId(tc.id),
                         call_id: tc.id,
                         name: tc.function.name,
                         arguments: tc.function.arguments,
