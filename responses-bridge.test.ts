@@ -82,6 +82,56 @@ describe('responses-bridge token cap', () => {
         expect(captured.calls[0].body.max_output_tokens).toBe(16);
     });
 
+    test('rewrites function_call.id to fc_ and keeps call_id', async () => {
+        const captured = captureFetch();
+        await handleResponsesAPIBridge(
+            {
+                model: 'gpt-5.6-luna',
+                messages: [
+                    { role: 'user', content: 'hi' },
+                    {
+                        role: 'assistant',
+                        content: '',
+                        tool_calls: [{
+                            id: 'call_oEPBEKYMxOpwlCLXHQaAaCVj',
+                            type: 'function',
+                            function: { name: 'Shell', arguments: '{}' },
+                        }],
+                    },
+                    { role: 'tool', tool_call_id: 'call_oEPBEKYMxOpwlCLXHQaAaCVj', content: 'ok' },
+                ],
+            },
+            makeDummyRequest(), 'chat-fc', 'http://localhost:4141',
+        );
+        const input = captured.calls[0].body.input;
+        const call = input.find((item: any) => item.type === 'function_call');
+        const output = input.find((item: any) => item.type === 'function_call_output');
+        expect(call.id).toBe('fc_oEPBEKYMxOpwlCLXHQaAaCVj');
+        expect(call.call_id).toBe('call_oEPBEKYMxOpwlCLXHQaAaCVj');
+        expect(output.call_id).toBe('call_oEPBEKYMxOpwlCLXHQaAaCVj');
+    });
+
+    test('rewrites toolu_ function_call ids to fc_', async () => {
+        const captured = captureFetch();
+        await handleResponsesAPIBridge(
+            {
+                model: 'gpt-6.1-sol',
+                messages: [{
+                    role: 'assistant',
+                    tool_calls: [{
+                        id: 'toolu_019sVDXbqVX4qAUQ6FRzVEDe',
+                        type: 'function',
+                        function: { name: 'Shell', arguments: '{}' },
+                    }],
+                }],
+            },
+            makeDummyRequest(), 'chat-toolu', 'http://localhost:4141',
+        );
+        const call = captured.calls[0].body.input.find((item: any) => item.type === 'function_call');
+        expect(call.id).toBe('fc_019sVDXbqVX4qAUQ6FRzVEDe');
+        expect(call.call_id).toBe('toolu_019sVDXbqVX4qAUQ6FRzVEDe');
+    });
+
     test('omits max_output_tokens when no token cap is provided', async () => {
         const captured = captureFetch();
         await handleResponsesAPIBridge(

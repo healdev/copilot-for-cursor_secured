@@ -6,7 +6,7 @@ import { addRequestLog, getNextRequestId, getUsageStats, flushToDisk } from './u
 import { loadAuthConfig, saveAuthConfig, generateApiKey, validateApiKey } from './auth-config';
 import { getUpstreamAuthHeader, getUpstreamApiKeys, createUpstreamApiKey, deleteUpstreamApiKey } from './upstream-auth';
 import { compactIfNeeded } from './max-mode';
-import { needsResponsesAPI } from './model-routing';
+import { needsResponsesAPI, unproxiedModelMessage } from './model-routing';
 import { getTunnelState, startTunnel, stopTunnel, subscribeTunnel, type TunnelProvider } from './tunnel';
 
 // ── Console capture for SSE streaming ─────────────────────────────────────────
@@ -320,6 +320,20 @@ Bun.serve({
       if (req.method === "POST" && url.pathname.includes("/chat/completions")) {
         const startTime = Date.now();
         let json = await req.json();
+
+        const unproxiedMessage = unproxiedModelMessage(json.model, PREFIX);
+        if (unproxiedMessage) {
+            console.warn(`⛔ Rejected non-proxy model: ${json.model}`);
+            addRequestLog({
+                id: getNextRequestId(), timestamp: startTime, model: String(json.model ?? ''),
+                promptTokens: 0, completionTokens: 0, totalTokens: 0,
+                status: 400, duration: Date.now() - startTime, stream: !!json.stream,
+            });
+            return Response.json(
+                { error: { message: unproxiedMessage, type: "invalid_request_error", code: "model_not_proxied" } },
+                { status: 400, headers: { "Access-Control-Allow-Origin": "*" } }
+            );
+        }
 
         logIncomingRequest(json);
 
